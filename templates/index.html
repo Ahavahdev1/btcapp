@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Compras de Bitcoin</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script>
+        async function updateBtcAmount() {
+            const valueInput = document.getElementById('value');
+            const btcAmount = document.getElementById('amount_btc');
+            const value = valueInput.value;
+
+            if (value === '') {
+                btcAmount.textContent = '0.00';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/get_btc_amount?value=${value}`);
+                const data = await response.json();
+                if (data.amount_btc !== undefined) {
+                    btcAmount.textContent = data.amount_btc.toFixed(8);
+                } else {
+                    btcAmount.textContent = 'Erro ao obter a quantidade de BTC';
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar a quantidade de BTC:', error);
+                btcAmount.textContent = 'Erro';
+            }
+        }
+
+        async function updateBtcPrice() {
+            const btcPriceElement = document.getElementById('btc_price');
+
+            try {
+                const response = await fetch('/get_btc_price');
+                const data = await response.json();
+                if (data.btc_price !== undefined) {
+                    btcPriceElement.textContent = `$${data.btc_price.toFixed(2)}`;
+                } else {
+                    btcPriceElement.textContent = 'Erro ao obter preço do BTC';
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar o preço do BTC:', error);
+                btcPriceElement.textContent = 'Erro ao obter preço do BTC';
+            }
+        }
+
+        window.onload = function() {
+            updateBtcPrice();
+            setInterval(updateBtcPrice, 60000);
+        };
+    </script>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="text-center mb-4">
+            <h1 class="display-4 font-weight-bold">Registro de Compras de Bitcoin</h1>
+            <p class="lead">Acompanhe o preço do Bitcoin e registre suas compras de forma simples e eficiente.</p>
+        </div>
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        Preço Atual do BTC
+                    </div>
+                    <div class="card-body text-center">
+                        <h2 id="btc_price" class="display-3">$0.00</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <form method="post" action="/add" class="form-inline justify-content-center mb-4">
+            <div class="form-group mx-2">
+                <label for="value" class="sr-only">Valor em USD:</label>
+                <input type="number" id="value" name="value" step="0.01" class="form-control form-control-lg" placeholder="Valor em USD" oninput="updateBtcAmount()" required>
+            </div>
+            <div class="form-group mx-2">
+                <p class="form-control-plaintext">Quantidade de BTC: <span id="amount_btc">0.00</span></p>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg">Adicionar Compra</button>
+        </form>
+        {% if value is not none %}
+        <div class="alert alert-info">
+            <h4 class="alert-heading">Resultado da Compra</h4>
+            <p>Valor em USD: <strong>${{ value }}</strong></p>
+            <p>Preço atual do BTC: <strong>${{ btc_price }}</strong></p>
+            <p>Quantidade de BTC comprada: <strong>{{ amount_btc }}</strong></p>
+            <p>Lucro/Prejuízo: <strong>${{ profit_loss }}</strong></p>
+            <p>Porcentagem de Lucro/Prejuízo: <strong>{{ profit_loss_percentage }}%</strong></p>
+        </div>
+        {% endif %}
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
